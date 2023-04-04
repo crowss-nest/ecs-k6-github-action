@@ -26,4 +26,4 @@ jobs:
           k6 version
 
       - name: Run K6 Load Test
-        run: k6 run load_test.js
+        run: k6 run K6/load_test.js
