@@ -4,63 +4,10 @@ on:
   push:
     branches:
       - main
-
-env:
-  AWS_REGION: ap-northeast-2
-  ECR_REGISTRY: public.ecr.aws/z7r1b9v0
-  ECR_REPOSITORY: simple_loading
-  ECS_SERVICE_NAME: simple-loading
-  ECS_CLUSTER_NAME: pocCluster
-  TASK_DEFINITION_NAME: simple-load
-  DOCKER_FILE_NAME: Dockerfile
-
 jobs:
-  deploy:
-    name: Deploy
+  my_job:
     runs-on: ubuntu-latest
-    environment: dev
-
+    timeout-minutes: 1
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ECS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
-      - name: Get Build Version
-        id: vars
-        run: echo ::set-output name=VERSION::$(cat VERSION)
-
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          VERSION: ${{ steps.vars.outputs.VERSION }}
-        run: |
-          docker build -t $ECR_REPOSITORY:latest .
-          docker tag $ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-      - name: Download Task Definition Template
-        run: |
-          aws ecs describe-task-definition \
-            --task-definition ${{ env.TASK_DEFINITION_NAME }} \
-            --query taskDefinition \
-            > task-definition.json
-
-      - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          service: ${{ env.ECS_SERVICE_NAME }}
-          cluster: ${{ env.ECS_CLUSTER_NAME }}
-          wait-for-service-stability: true
-          force-new-deployment: true
+    - name: Wait for 5 seconds
+      run: sleep 5
