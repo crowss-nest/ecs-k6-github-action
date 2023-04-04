@@ -45,7 +45,7 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           VERSION: ${{ steps.vars.outputs.VERSION }}
         run: |
-          docker build -f $DOCKER_FILE_NAME -t $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION .
+          docker build -f $DOCKER_FILE_NAME -t $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION: .
           docker tag $ECR_REPOSITORY:$VERSION $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker tag $ECR_REPOSITORY:$VERSION $ECR_REGISTRY/$ECR_REPOSITORY:$VERSION
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
