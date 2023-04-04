@@ -12,7 +12,7 @@ export let options = {
 
 
 export default function () {
-  let res = http.get('https://example.com'); // 여기에 테스트하려는 웹 사이트의 주소를 입력하세요
+  let res = http.get('http://poc-376430443.ap-northeast-2.elb.amazonaws.com'); // 여기에 테스트하려는 웹 사이트의 주소를 입력하세요
 
   check(res, {
     'status was 200': (r) => r.status == 200,
