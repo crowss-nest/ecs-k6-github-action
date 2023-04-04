@@ -38,11 +38,11 @@ jobs:
       id: tag-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.event.release.tag_name }}
+        IMAGE_TAG: ${{ github.sha }}
         MANIFEST: aws ecr batch-get-image --repository-name $ECR_REPOSITORY --image-ids imageTag=latest --output json | jq --raw-output --join-output '.images[0].imageManifest'
       run: |
         aws ecr put-image --repository-name $ECR_REPOSITORY --image-tag $IMAGE_TAG --image-manifest $MANIFEST
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:${IMAGE_TAG}"
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task-def
