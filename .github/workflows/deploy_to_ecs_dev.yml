@@ -7,57 +7,55 @@ on:
 
 env:
   AWS_REGION: ap-northeast-2
-  ECR_REGISTRY: public.ecr.aws/z7r1b9v0/simple_loading
   ECR_REPOSITORY: simple_loading
-  ECS_SERVICE_NAME: simple-loading
-  ECS_CLUSTER_NAME: pocCluster
-  TASK_DEFINITION_NAME: simple-load
-  DOCKER_FILE_NAME: Dockerfile
+  ECS_SERVICE: simple-loading
+  ECS_CLUSTER: pocCluster
+  ECS_TASK_DEFINITION: simple-load
+  CONTAINER_NAME: simple
 
 jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    environment: dev
+    environment: production
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v3
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ECS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Get Build Version
-        id: vars
-        run: echo ::set-output name=VERSION::$(cat VERSION)
+    - name: Tagging image in ECR
+      id: tag-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.event.release.tag_name }}
+        MANIFEST: aws ecr batch-get-image --repository-name $ECR_REPOSITORY --image-ids imageTag=latest --output json | jq --raw-output --join-output '.images[0].imageManifest'
+      run: |
+        aws ecr put-image --repository-name $ECR_REPOSITORY --image-tag $IMAGE_TAG --image-manifest $MANIFEST
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      - name: Download Task Definition Template
-        run: |
-          aws ecs describe-task-definition \
-            --task-definition ${{ env.TASK_DEFINITION_NAME }} \
-            --query taskDefinition \
-            > task-definition.json
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: ${{ env.ECS_TASK_DEFINITION }}
+        container-name: ${{ env.CONTAINER_NAME }}
+        image: ${{ steps.tag-image.outputs.image }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          push: true
-          tags: ${{ env.ECR_REGISTRY }}:${{ steps.vars.outputs.VERSION }}
-
-      - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          service: ${{ env.ECS_SERVICE_NAME }}
-          cluster: ${{ env.ECS_CLUSTER_NAME }}
-          wait-for-service-stability: true
-          force-new-deployment: true
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true
