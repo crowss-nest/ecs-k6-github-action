@@ -5,18 +5,26 @@ const searchKeywords = ['점퍼', '가디건', '폴로', '셔츠', '데님팬츠
 
 export let options = {
   stages: [
-    { duration: '2m', target: 300 },
-    { duration: '3m', target: 359 },
-    { duration: '5m', target: 488 },
-    { duration: '2m', target: 0 },
+    { duration: '2m', target: 50 },
+    { duration: '3m', target: 60 },
+    { duration: '5m', target: 82 },
+    { duration: '10m', target: 0 },
   ],
 };
+
+function getMyIPAddress() {
+  let res = http.get('https://ipinfo.io/json');
+  let ipInfo = JSON.parse(res.body);
+  return ipInfo.ip;
+}
 
 function getRandomSearchKeyword() {
   return searchKeywords[Math.floor(Math.random() * searchKeywords.length)];
 }
 
 export default function () {
+  console.log("My IP address is: " + getMyIPAddress());
+
   const searchKeyword = getRandomSearchKeyword();
   const url = `https://stg.onthelook.co.kr/searchV3/result?q=${encodeURIComponent(searchKeyword)}&t=post&f={"gender":[],"height":[],"weight":[],"price":[1000,200000],"selectedCategory":"","selectedSubCategory":"","item":[],"tpo":[],"season":[],"mood":[],"color":[],"randomMood":"false","bodyType":[]}&vt=3&st=POPULAR_STYLE`;
 
