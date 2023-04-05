@@ -14,16 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1
 
-      - name: Set up K6
-        run: |
-          curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
-          sudo apt-get install -y nodejs
-          wget https://github.com/k6io/k6/releases/download/v0.34.1/k6-v0.34.1-linux-amd64.tar.gz
-          tar -xvf k6-v0.34.1-linux-amd64.tar.gz
-          sudo mv k6-v0.34.1-linux-amd64/k6 /usr/local/bin/
-          k6 version
-
-      - name: Run K6 Load Test
-        run: k6 run K6/load_test.js
+      - name: Run local k6 test
+        uses: grafana/k6-action@v0.2.0
+        with:
+          filename: test.js
