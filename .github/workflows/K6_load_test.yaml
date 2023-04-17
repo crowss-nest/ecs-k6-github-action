@@ -1,19 +1,14 @@
-name: EC2 K6 Test Runner
+name: EC2 Load Test
 
 on:
-  workflow_run:
-    workflows: ["(DEV) Deploy to Amazon ECS"]
-    branches:
-      - main
-    types:
-      - completed
+  workflow_dispatch:
 
 jobs:
-  load_test:
+  setup_and_run_load_test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v2
 
     - name: Setup AWS CLI
@@ -21,14 +16,59 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
+        aws-region: ${{ secrets.AWS_REGION }}# Change to your preferred AWS region
 
-    - name: Run K6 Load Test on EC2
+    - name: Install dependencies
       run: |
-        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b2eaf82f5c11df40 --count 1 --instance-type t2.micro --key-name ${{ secrets.KEY_NAME }} --subnet-id ${{ secrets.SUBNET_ID }} --security-group-ids ${{ secrets.SECURITY_GROUP_ID }} --user-data file://user-data.sh --query 'Instances[0].InstanceId' --output text)
-        
+        sudo apt-get update
+        sudo apt-get install -y jq awscli
+
+    - name: Decode and save private key
+      run: |
+        echo "${{ secrets.EC2_PRIVATE_KEY_BASE64 }}" | base64 -d > ec2-private-key.pem
+        chmod 400 ec2-private-key.pem
+
+    - name: Launch EC2 instance
+      run: |
+        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b2eaf82f5c11df40 --count 1 --instance-type t2.micro --key-name ${{ secrets.KEY_NAME }} --security-group-ids 	sg-0dece0956ba8ccbfc --user-data file://user-data.sh --query 'Instances[0].InstanceId' --output text)
+        echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
+
+    - name: Wait for instance to be running
+      run: |
         aws ec2 wait instance-running --instance-ids $INSTANCE_ID
-        
-        aws ec2 get-console-output --instance-id $INSTANCE_ID --output text
-        
+
+    - name: Get instance public IP
+      run: |
+        PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
+        echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+
+    - name: Wait for SSH to be available
+      run: |
+        until ssh -o StrictHostKeyChecking=no -i ec2-private-key.pem ubuntu@$PUBLIC_IP true; do
+          sleep 5
+        done
+
+    - name: Transfer load test script to EC2 instance
+      run: |
+        scp -o StrictHostKeyChecking=no -i ec2-private-key.pem K6/load_test.js ubuntu@$PUBLIC_IP:/home/ubuntu/
+
+
+    - name: Run k6 load test
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ec2-private-key.pem ubuntu@$PUBLIC_IP "k6 run /home/ubuntu/load_test.js"
+        TEST_STATUS=$?
+        echo "TEST_STATUS=$TEST_STATUS" >> $GITHUB_ENV
+
+    - name: Retrieve load test results
+      run: |
+        scp -o StrictHostKeyChecking=no -i ec2-private-key.pem ubuntu@$PUBLIC_IP:/path/to/load_test_results.txt .
+
+    - name: Upload load test results as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: load-test-results
+        path: load_test_results.txt
+
+    - name: Terminate EC2 instance
+      run: |
         aws ec2 terminate-instances --instance-ids $INSTANCE_ID
