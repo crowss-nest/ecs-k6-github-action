@@ -34,10 +34,10 @@ jobs:
         echo "INSTANCE_IP=$INSTANCE_IP" >> $GITHUB_ENV
 
     - name: Copy K6 script to EC2 Instance
-      run: scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY }}.pem /K6/load_test.js ubuntu@${{ env.INSTANCE_IP }}:/home/ubuntu/
+      run: scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY }}.pem load_test.js ubuntu@${{ env.INSTANCE_IP }}:/home/ubuntu/
 
     - name: Run K6 script on EC2 Instance
-      run: ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY }}.pem ubuntu@${{ env.INSTANCE_IP }} k6 run /home/ubuntu/K6/load_test.js
+      run: ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY }}.pem ubuntu@${{ env.INSTANCE_IP }} k6 run /home/ubuntu/load_test.js
 
 
     - name: Terminate EC2 Instance
