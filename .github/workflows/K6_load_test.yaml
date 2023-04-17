@@ -25,9 +25,8 @@ jobs:
 
     - name: Create and Start EC2 Instance
       run: |
-        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b2eaf82f5c11df40 --instance-type t2.micro --key-name crowsnest --security-group-ids YOUR-SECURITY-GROUP-ID sg-0dece0956ba8ccbfc --subnet-id YOUR-SUBNET-ID subnet-079204d477c3b73f1 --query 'Instances[0].InstanceId' --output text)
-        echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
-        aws ec2 wait instance-running --instance-ids $INSTANCE_ID
+        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b2eaf82f5c11df40 --instance-type t2.micro --key-name crowsnest --security-group-ids sg-0dece0956ba8ccbfc --subnet-id subnet-079204d477c3b73f1 --query 'Instances[0].InstanceId' --output text)
+
 
     - name: Get Instance Public IP
       run: |
