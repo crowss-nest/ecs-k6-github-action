@@ -2,7 +2,7 @@ name: K6 Load Test
 
 on:
   workflow_run:
-    workflows: [ (DEV) Deploy to Amazon ECS]
+    workflows: ["(DEV) Deploy to Amazon ECS"]
     branches:
       - main
     types:
@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      
+
       # Install K6
       - name: Set up K6
         run: |
@@ -24,7 +24,9 @@ jobs:
           | grep amd64.tar.gz \
           | cut -d '"' -f 4 \
           | wget -O k6.tar.gz -qi -
-
+          tar xf k6.tar.gz
+          sudo mv k6-*-*-*-amd64/k6 /usr/local/bin/
+          rm -rf k6.tar.gz k6-*-*-*-amd64
 
       # Set up and configure AWS CLI
       - name: Set up AWS CLI
@@ -41,10 +43,10 @@ jobs:
         run: |
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
-          INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b2eaf82f5c11df40 --count 1 --instance-type t2.micro --key-name crowsnest --security-group-ids sg-0dece0956ba8ccbfc	 --subnet-id subnet-079204d477c3b73f1	 --query 'Instances[0].InstanceId' --output text)
+          INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b2eaf82f5c11df40 --count 1 --instance-type t2.micro --key-name crowsnest --security-group-ids sg-0dece0956ba8ccbfc --subnet-id subnet-079204d477c3b73f1 --query 'Instances[0].InstanceId' --output text)
           aws ec2 wait instance-status-ok --instance-ids $INSTANCE_ID
           PUBLIC_IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
-          scp -i private_key.pem -o StrictHostKeyChecking=no /K6/load_test.js.js ubuntu@$PUBLIC_IP:/home/ubuntu/
-          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$PUBLIC_IP "curl -sL https://get.k6.io/ | sudo bash && k6 run /home/ubuntu/<your_test_script>.js"
+          scp -i private_key.pem -o StrictHostKeyChecking=no ./K6/load_test.js ubuntu@$PUBLIC_IP:/home/ubuntu/
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ubuntu@$PUBLIC_IP "curl -sL https://get.k6.io/ | sudo bash && k6 run /home/ubuntu/load_test.js"
           aws ec2 terminate-instances --instance-ids $INSTANCE_ID
           rm -f private_key.pem
