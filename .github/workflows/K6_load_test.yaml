@@ -2,7 +2,7 @@ name: K6 Load Test
 
 on:
   workflow_run:
-    workflows: ["Deploy to ECS"]
+    workflows: [ (DEV) Deploy to Amazon ECS ]
     branches:
       - main
     types:
