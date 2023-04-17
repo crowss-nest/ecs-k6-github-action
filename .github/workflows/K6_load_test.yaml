@@ -65,13 +65,14 @@ jobs:
 
     - name: Run k6 load test
       run: |
-        ssh -o StrictHostKeyChecking=no -i ec2-private-key.pem ubuntu@$PUBLIC_IP "k6 run /home/ubuntu/load_test.js"
+        ssh -o StrictHostKeyChecking=no -i ec2-private-key.pem ubuntu@$PUBLIC_IP "k6 run --out json=load_test_results.txt /home/ubuntu/load_test.js"
         TEST_STATUS=$?
         echo "TEST_STATUS=$TEST_STATUS" >> $GITHUB_ENV
 
     - name: Retrieve load test results
       run: |
-        scp -o StrictHostKeyChecking=no -i ec2-private-key.pem ubuntu@$PUBLIC_IP:/path/to/load_test_results.txt .
+        scp -o StrictHostKeyChecking=no -i ec2-private-key.pem ubuntu@$PUBLIC_IP:/home/ubuntu/load_test_results.txt .
+
 
     - name: Upload load test results as artifact
       uses: actions/upload-artifact@v2
