@@ -25,7 +25,7 @@ jobs:
 
     - name: Run K6 Load Test on EC2
       run: |
-        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-XXXXXXXXXXXXX --count 1 --instance-type t2.micro --key-name ${{ secrets.KEY_NAME }} --subnet-id ${{ secrets.SUBNET_ID }} --security-group-ids ${{ secrets.SECURITY_GROUP_ID }} --user-data file://user-data.sh --query 'Instances[0].InstanceId' --output text)
+        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b2eaf82f5c11df40 --count 1 --instance-type t2.micro --key-name ${{ secrets.KEY_NAME }} --subnet-id ${{ secrets.SUBNET_ID }} --security-group-ids ${{ secrets.SECURITY_GROUP_ID }} --user-data file://user-data.sh --query 'Instances[0].InstanceId' --output text)
         
         aws ec2 wait instance-running --instance-ids $INSTANCE_ID
         
