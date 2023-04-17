@@ -2,7 +2,7 @@ name: K6 Load Test
 
 on:
   workflow_run:
-    workflows: [ (DEV) Deploy to Amazon ECS ]
+    workflows: [ (DEV) Deploy to Amazon ECS]
     branches:
       - main
     types:
@@ -21,11 +21,10 @@ jobs:
         run: |
           curl -s https://api.github.com/repos/loadimpact/k6/releases/latest \
           | grep browser_download_url \
+          | grep amd64.tar.gz \
           | cut -d '"' -f 4 \
           | wget -O k6.tar.gz -qi -
-          tar xf k6.tar.gz
-          sudo mv k6-*-*-*-amd64/k6 /usr/local/bin/
-          rm -rf k6.tar.gz k6-*-*-*-amd64
+
 
       # Set up and configure AWS CLI
       - name: Set up AWS CLI
