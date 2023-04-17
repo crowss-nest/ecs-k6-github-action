@@ -1,12 +1,12 @@
 #!/bin/bash
-yum update -y
-yum install -y amazon-linux-extras
-amazon-linux-extras install -y epel
-yum install -y k6
+# Update package lists and install dependencies
+export DEBIAN_FRONTEND=noninteractive
+apt-get update
+apt-get install -y curl gnupg
 
-# Clone the repository
-git clone https://github.com/crowss-nest/ecs-k6-github-action.git
-cd your-repo
+# Add the k6 repository
+curl -s https://packagecloud.io/install/repositories/loadimpact/k6/script.deb.sh | bash
 
-# Run the load test
-k6 run K6/load_test.js
+# Install k6
+apt-get update
+apt-get install -y k6
