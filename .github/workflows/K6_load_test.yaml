@@ -23,6 +23,11 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
+    - name: Create SSH key file
+      run: |
+        echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > private_key.pem
+        chmod 600 private_key.pem
+
     - name: Create and Start EC2 Instance
       run: |
         INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b2eaf82f5c11df40 --instance-type t2.micro --key-name crowsnest --security-group-ids sg-0dece0956ba8ccbfc --subnet-id subnet-079204d477c3b73f1 --query 'Instances[0].InstanceId' --output text)
@@ -34,11 +39,10 @@ jobs:
         echo "INSTANCE_IP=$INSTANCE_IP" >> $GITHUB_ENV
 
     - name: Copy K6 script to EC2 Instance
-      run: scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY }}.pem load_test.js ubuntu@${{ env.INSTANCE_IP }}:/home/ubuntu/
+      run: scp -o StrictHostKeyChecking=no -i private_key.pem K6/load_test.js ubuntu@${{ env.INSTANCE_IP }}:/home/ubuntu/
 
     - name: Run K6 script on EC2 Instance
-      run: ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_PRIVATE_KEY }}.pem ubuntu@${{ env.INSTANCE_IP }} k6 run /home/ubuntu/load_test.js
-
+      run: ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ env.INSTANCE_IP }} k6 run /home/ubuntu/load_test.js
 
     - name: Terminate EC2 Instance
       run: aws ec2 terminate-instances --instance-ids $INSTANCE_ID
