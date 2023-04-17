@@ -26,7 +26,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y jq awscli
+        sudo apt-get install -y awscli
 
     - name: Decode and save private key
       run: |
