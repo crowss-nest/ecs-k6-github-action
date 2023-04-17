@@ -56,6 +56,11 @@ jobs:
     - name: Transfer load test script to EC2 instance
       run: |
         scp -o StrictHostKeyChecking=no -i ec2-private-key.pem K6/load_test.js ubuntu@$PUBLIC_IP:/home/ubuntu/
+    
+    
+    - name: Install k6 on EC2 instance
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ec2-private-key.pem ubuntu@$PUBLIC_IP "sudo apt update && sudo apt install snapd && sudo snap install k6"
 
 
     - name: Run k6 load test
