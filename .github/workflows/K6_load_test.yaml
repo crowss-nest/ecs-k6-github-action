@@ -9,7 +9,7 @@ on:
       - completed
 
 jobs:
-  ec2-k6-runner:
+  load_test:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,26 +23,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Create SSH key file
+    - name: Run K6 Load Test on EC2
       run: |
-        echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > private_key.pem
-        chmod 600 private_key.pem
-
-    - name: Create and Start EC2 Instance
-      run: |
-        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b2eaf82f5c11df40 --instance-type t2.micro --key-name crowsnest --security-group-ids sg-0dece0956ba8ccbfc --subnet-id subnet-079204d477c3b73f1 --query 'Instances[0].InstanceId' --output text)
-
-    - name: Get Instance Public IP
-      run: |
-        INSTANCE_IP=$(aws ec2 describe-instances --instance-ids $INSTANCE_ID --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
-        echo "INSTANCE_IP=$INSTANCE_IP" >> $GITHUB_ENV
-        echo "Instance IP: $INSTANCE_IP"
-
-    - name: Copy K6 script to EC2 Instance
-      run: scp -o StrictHostKeyChecking=no -i private_key.pem K6/load_test.js ubuntu@${{ env.INSTANCE_IP }}:/home/ubuntu/
-
-    - name: Run K6 script on EC2 Instance
-      run: ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ env.INSTANCE_IP }} k6 run /home/ubuntu/load_test.js
-
-    - name: Terminate EC2 Instance
-      run: aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-XXXXXXXXXXXXX --count 1 --instance-type t2.micro --key-name ${{ secrets.KEY_NAME }} --subnet-id ${{ secrets.SUBNET_ID }} --security-group-ids ${{ secrets.SECURITY_GROUP_ID }} --user-data file://user-data.sh --query 'Instances[0].InstanceId' --output text)
+        
+        aws ec2 wait instance-running --instance-ids $INSTANCE_ID
+        
+        aws ec2 get-console-output --instance-id $INSTANCE_ID --output text
+        
+        aws ec2 terminate-instances --instance-ids $INSTANCE_ID
