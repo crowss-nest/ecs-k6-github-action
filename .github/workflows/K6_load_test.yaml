@@ -35,7 +35,7 @@ jobs:
 
     - name: Launch EC2 instance
       run: |
-        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b2eaf82f5c11df40 --count 1 --instance-type t2.micro --key-name ${{ secrets.KEY_NAME }} --security-group-ids 	sg-0bb8a2a0f2c6c2c6d --user-data file://user-data.sh --query 'Instances[0].InstanceId' --output text)
+        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-0b2eaf82f5c11df40 --count 1 --instance-type t2.micro --key-name ${{ secrets.KEY_NAME }} --security-group-ids sg-0866dc9638aac1825 --user-data file://user-data.sh --query 'Instances[0].InstanceId' --output text)
         echo "INSTANCE_ID=$INSTANCE_ID" >> $GITHUB_ENV
 
     - name: Wait for instance to be running
