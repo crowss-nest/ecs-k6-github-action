@@ -6,26 +6,10 @@ on:
       - main
 
 jobs:
-  load_test:
+  wait_and_exit:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Setup AWS CLI
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ secrets.AWS_REGION }}
-
-    - name: Run K6 Load Test on EC2
-      run: |
-        INSTANCE_ID=$(aws ec2 run-instances --image-id ami-XXXXXXXXXXXXX --count 1 --instance-type t2.micro --key-name ${{ secrets.KEY_NAME }} --subnet-id ${{ secrets.SUBNET_ID }} --security-group-ids ${{ secrets.SECURITY_GROUP_ID }} --user-data file://user-data.sh --query 'Instances[0].InstanceId' --output text)
-        
-        aws ec2 wait instance-running --instance-ids $INSTANCE_ID
-        
-        aws ec2 get-console-output --instance-id $INSTANCE_ID --output text
-        
-        aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+    - name: Wait for 5 seconds
+      run: sleep 5
+    - name: Exit
+      run: echo "Exiting after 5 seconds."
