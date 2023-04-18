@@ -63,11 +63,11 @@ jobs:
         ssh -o StrictHostKeyChecking=no -i ec2-private-key.pem ubuntu@$PUBLIC_IP "sudo apt update && sudo apt install snapd && sudo snap install k6"
 
 
-    - name: Run k6 load test
+    - name: Run k6 load test and save results
       run: |
-        ssh -o StrictHostKeyChecking=no -i ec2-private-key.pem ubuntu@$PUBLIC_IP "k6 run --out json=load_test_results.txt /home/ubuntu/load_test.js"
-        TEST_STATUS=$?
-        echo "TEST_STATUS=$TEST_STATUS" >> $GITHUB_ENV
+        ssh -o StrictHostKeyChecking=no -i ec2-private-key.pem ubuntu@$PUBLIC_IP "k6 run /home/ubuntu/load_test.js > full_load_test_results.txt 2>&1"
+        sed -n '33,36p' full_load_test_results.txt > load_test_results.txt
+
 
     - name: Retrieve load test results
       run: |
@@ -79,3 +79,7 @@ jobs:
       with:
         name: load-test-results
         path: load_test_results.txt
+
+    - name: Terminate EC2 instance
+      run: |
+        aws ec2 terminate-instances --instance-ids $INSTANCE_ID
