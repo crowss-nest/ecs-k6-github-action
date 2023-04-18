@@ -77,3 +77,7 @@ jobs:
       with:
         name: full-load-test-results
         path: full_load_test_results.txt
+
+    - name: Terminate EC2 instance
+      run: |
+        aws ec2 terminate-instances --instance-ids $INSTANCE_ID
