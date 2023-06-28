@@ -1,0 +1,20 @@
+name: K6 Load Test Local
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  setup_and_run_load_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      - name: Run k6 local test
+        uses: grafana/k6-action@v0.3.0
+        with:
+          filename: load_test.js
+          flags: --vus 50 --duration 10s
