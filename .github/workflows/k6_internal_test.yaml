@@ -18,10 +18,17 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
+      - name: Install K6
+        run: |
+          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
       - name: Run load test
-        uses: loadimpact/k6-github-actions@v1.2.0
-        with:
-          args: run --out json=load_test_results.json K6/load_test.js
+        run: |
+          cd K6
+          k6 run --out json=load_test_results.json load_test.js
 
       - name: Upload load test results as artifact
         uses: actions/upload-artifact@v2
