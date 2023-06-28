@@ -18,25 +18,11 @@ jobs:
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
 
-      - name: Connect to EC2 instance via Tailscale
+      - name: Run curl command
         run: |
-          tailscale up
-          ping -c 4 ${{ secrets.TAILSCALE_PUBLIC_IP }}
-
-      - name: Install K6
-        run: |
-          sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
-          echo "deb https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update
-          sudo apt-get install k6
-
-      - name: Run load test
-        run: |
-          cd K6
-          k6 run --out json=load_test_results.json load_test.js
-
-      - name: Upload load test results as artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: load-test-results
-          path: K6/load_test_results.json
+          curl -X POST -H "Content-Type: application/json" -d '{
+            "query": "query GetPost($id: String!) { post: Post(id: $id) { ok error items { id type userId imageUrl videoUrl youtubeVideoId youtubeVideoTitle youtubeVideoTime detail status createdBy isDelete blogDetail tag user { id gender instagramId imageUrl height creator { id userId height weight bodyShape preferStyle preferBrand isHideWeight job youtubeChannelName youtubeChannelHandle youtubeChannelProfileImageUrl __typename } __typename } images { id postId url __typename } postItems { id isWear category time size product { id imageUrl brandId brand { id name nameKr __typename } name nameEn category subCategory price isSale salePrice saleLink displayName seasonType needVerify affiliateStoreId affiliateProductId productItems { id size stock status __typename } __typename } __typename } styleTags { id name code displayName displayNameEn displayNameJa __typename } ambassadorBrandId createdAt updatedAt __typename } __typename }}",
+            "variables": {
+              "id": "36313"
+            }
+          }' api-test.onthelook.co.kr/graphql
