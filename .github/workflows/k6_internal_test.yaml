@@ -1,0 +1,30 @@
+name: K6 Load Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  setup_and_run_load_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Tailscale
+        uses: tailscale/github-action@v1
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      - name: Run load test
+        uses: loadimpact/k6-github-actions@v1.2.0
+        with:
+          args: run --out json=load_test_results.json K6/load_test.js
+
+      - name: Upload load test results as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: load-test-results
+          path: K6/load_test_results.json
