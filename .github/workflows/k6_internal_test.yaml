@@ -25,4 +25,4 @@ jobs:
             "variables": {
               "id": "36313"
             }
-          }' api-test.onthelook.co.kr/graphql
+          }' api-stg.onthelook.co.kr/graphql
